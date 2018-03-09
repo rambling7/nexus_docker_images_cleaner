@@ -32,10 +32,10 @@ class NexusCleaner:
         search_url = '{0}:{1}/service/rest/beta/search'.format(self.NEXUS_ADRESS, self.NEXUS_PORT)
         try:
             response = get(search_url, auth=(self.USER_LOGIN, self.USER_PASSWORD), params=params)
+            response = response.json()
         except:
             print('Incorrect adress / Not authenticated / Problem with Nexus server')
             raise SystemExit
-        response = response.json()
         images = response['items']
         self.my_images = []
         for image in images:
@@ -102,43 +102,91 @@ class NexusCleaner:
             image['DeleteCode'] = self._delete_image(image['ImageUrl'], image['ImageSha'])
         return self.del_images
 
-if __name__ == "__main__":
 
-    flag_list = argv[1:]
-    my_flags = ['-k', '-d', '-r', '-i', '-t', '--all-repositories', '--all-images']
+# goofy flag parser (maybe try to refactoring this to func-style)
+# return needed-parameters list
+def nexus_cleaner_flag_parse(flag_list):
+    if '-h' in flag_list:
+        print(
+    '''
+    usage:\tpython3 nexus_docker_images_cleaner.py [options]
+
+    Options and arguments:
+    -d\t\t\t:[int] Days count after which image is deleted (10 by default). (!) Can't be used with '-k' option.
+    -h\t\t\t:[] Help.
+    -i [REQUIRED]\t:[str] Image name. If you want to work with all images use '--all-images' option.
+    -k\t\t\t:[int] Number of latest images to keep (5 by default). (!) Can't be used with '-d' option.
+    -r [REQUIRED]\t:[str] Repository name. If you want to work with all repositories use '--all-repositories' option.
+    -t\t\t\t:[str] Tag name (delete all by default).
+
+    Confirming options:
+    --all-images\t:[] Use to clean all images instead '-i'.
+    --all-repositories\t:[] Use to clean all repositories instead '-r'.
+    ''')
+        raise SystemExit
+    flag_map = ['-k', '-d', '-r', '-i', '-t', '-h', '--all-repositories', '--all-images']
     if '--all-repositories' in flag_list:
         RepoName = ''
         flag_list.remove('--all-repositories')
-        my_flags.remove('-r')
-        my_flags.remove('--all-repositories')
+        flag_map.remove('-r')
+        flag_map.remove('--all-repositories')
     if '--all-images' in flag_list:
         ImageName = ''
         flag_list.remove('--all-images')
-        my_flags.remove('-i')
-        my_flags.remove('--all-images')
+        flag_map.remove('-i')
+        flag_map.remove('--all-images')
     flag_dict = {}
     for flag_i in range(0, len(flag_list), 2):
-        if flag_list[flag_i] not in my_flags:
+        if flag_list[flag_i] not in flag_map:
             print(('incorrect flag: {0}'.format(flag_list[flag_i])))
             raise SystemExit
         else:
             flag_dict[flag_list[flag_i]] = flag_list[flag_i + 1]
-    if '-r' not in flag_dict and 'RepoName' not in globals():
+    if '-r' not in flag_dict and 'RepoName' not in locals():
         print('Miss repo (-r) flag: use --all-repositories to clean all repositories')
         raise SystemExit
-    if '-i' not in flag_dict and 'ImageName' not in globals():
+    if '-i' not in flag_dict and 'ImageName' not in locals():
         print('Miss image (-i) flag: use --all-images to clean all images')
         raise SystemExit
-    Keep = 5 if '-k' not in flag_dict else flag_dict['-k']
-    Days = 10 if '-d' not in flag_dict else flag_dict['-d']
+    if '-d' in flag_dict and '-k' in flag_dict:
+        print("Use of incompatible options '-d' and '-k'")
+        raise SystemExit
+    elif '-d' in flag_dict:
+        Days = flag_dict['-d']
+        try:
+            int(Days)
+        except:
+            print('Incorrect data type: -d')
+        Keep = 0
+    elif '-k' in flag_dict:
+        Keep = flag_dict['-k']
+        try:
+            int(Keep)
+        except:
+            print('Incorrect data type: -k')
+        Days = 0
+    else:
+        Keep = 0
+        Days = 0
     ImageVersion = '' if '-t' not in flag_dict else flag_dict['-t']
     if '-r' in flag_dict:
         RepoName = flag_dict['-r']
     if '-i' in flag_dict:
         ImageName = flag_dict['-i']
+    return [Keep, Days, RepoName, ImageName, ImageVersion]
 
+
+if __name__ == "__main__":
+
+    flag_list = nexus_cleaner_flag_parse(argv[1:])
     nexus = NexusCleaner()
-    deleted_list = nexus.clean_old_images(Keep=int(Keep), Days=int(Days), RepoName=RepoName, ImageName=ImageName, ImageVersion=ImageVersion)
+    print(flag_list)
+    deleted_list = nexus.clean_old_images(
+        Keep=int(flag_list[0]),
+        Days=int(flag_list[1]),
+        RepoName=flag_list[2],
+        ImageName=flag_list[3],
+        ImageVersion=flag_list[4])
     if deleted_list:
         for image in deleted_list:
             print(('REPOSITORY: {0} | DELETED: {1}:{2}'.format(image['RepoName'], image['ImageName'], image['ImageVersion'])))
