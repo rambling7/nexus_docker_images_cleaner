@@ -1,6 +1,15 @@
 # nexus_docker_images_cleaner
 Delete Nexus OSS Docker images by flags.
 
+
+Requires environment variables
+
+NEXUS_ADRESS    
+NEXUS_PORT      
+USER_LOGIN      
+USER_PASSWORD   
+
+
     usage:      python3 nexus_docker_images_cleaner.py [options]
 
     Options and arguments:
@@ -14,3 +23,4 @@ Delete Nexus OSS Docker images by flags.
     Confirming options:
     --all-images        :[] Use to clean all images instead '-i'.
     --all-repositories  :[] Use to clean all repositories instead '-r'.
+
