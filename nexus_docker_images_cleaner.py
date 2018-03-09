@@ -112,10 +112,10 @@ def nexus_cleaner_flag_parse(flag_list):
     usage:\tpython3 nexus_docker_images_cleaner.py [options]
 
     Options and arguments:
-    -d\t\t\t:[int] Days count after which image is deleted (10 by default). (!) Can't be used with '-k' option.
+    -d\t\t\t:[int] Days count after which image is deleted. (!) Can't be used with '-k' option.
     -h\t\t\t:[] Help.
     -i [REQUIRED]\t:[str] Image name. If you want to work with all images use '--all-images' option.
-    -k\t\t\t:[int] Number of latest images to keep (5 by default). (!) Can't be used with '-d' option.
+    -k\t\t\t:[int] Number of latest images to keep. (!) Can't be used with '-d' option.
     -r [REQUIRED]\t:[str] Repository name. If you want to work with all repositories use '--all-repositories' option.
     -t\t\t\t:[str] Tag name (delete all by default).
 
