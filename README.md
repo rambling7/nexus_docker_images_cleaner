@@ -6,11 +6,11 @@ Requires environment variables:
 
 NEXUS_ADRESS    
 NEXUS_PORT      
-USER_LOGIN      
-USER_PASSWORD   
+NEXUS_USER_LOGIN      
+NEXUS_USER_PASSWORD   
 
 
-    usage:      python3 nexus_docker_images_cleaner.py [options]
+    Usage:      python3 nexus_docker_images_cleaner.py [options]
 
     Options and arguments:
     -d                  :[int] Days count after which image is deleted (0 by default). (!) Can't be used with '-k' option.

@@ -13,8 +13,8 @@ class NexusCleaner:
         try:
             self.NEXUS_ADRESS = environ.get('NEXUS_ADRESS')
             self.NEXUS_PORT = environ.get('NEXUS_PORT')
-            self.USER_LOGIN = environ.get('USER_LOGIN')
-            self.USER_PASSWORD = environ.get('USER_PASSWORD')
+            self.USER_LOGIN = environ.get('NEXUS_USER_LOGIN')
+            self.USER_PASSWORD = environ.get('NEXUS_USER_PASSWORD')
         except:
             print('Environment variables not set')
             raise SystemExit
