@@ -8,14 +8,13 @@ from sys import argv
 class NexusCleaner:
 
     # init from env var
+    # refactor this later (get rid of if)
     def __init__(self):
-
-        try:
-            self.NEXUS_ADRESS = environ.get('NEXUS_ADRESS')
-            self.NEXUS_PORT = environ.get('NEXUS_PORT')
-            self.USER_LOGIN = environ.get('NEXUS_USER_LOGIN')
-            self.USER_PASSWORD = environ.get('NEXUS_USER_PASSWORD')
-        except:
+        self.NEXUS_ADDRESS = environ.get('NEXUS_ADDRESS')
+        self.NEXUS_PORT = environ.get('NEXUS_PORT')
+        self.NEXUS_USER_LOGIN = environ.get('NEXUS_USER_LOGIN')
+        self.NEXUS_USER_PASSWORD = environ.get('NEXUS_USER_PASSWORD')
+        if self.NEXUS_ADDRESS is None or self.NEXUS_PORT is None or self.NEXUS_USER_LOGIN is None or self.NEXUS_USER_PASSWORD is None:
             print('Environment variables not set')
             raise SystemExit
 
@@ -29,21 +28,21 @@ class NexusCleaner:
             params['name'] = ImageName
         if ImageVersion:
             params['version'] = ImageVersion
-        search_url = '{0}:{1}/service/rest/beta/search'.format(self.NEXUS_ADRESS, self.NEXUS_PORT)
+        search_url = '{0}:{1}/service/rest/beta/search'.format(self.NEXUS_ADDRESS, self.NEXUS_PORT)
         try:
-            response = get(search_url, auth=(self.USER_LOGIN, self.USER_PASSWORD), params=params)
+            response = get(search_url, auth=(self.NEXUS_USER_LOGIN, self.NEXUS_USER_PASSWORD), params=params)
             response = response.json()
-        except:
-            print('Incorrect adress / Not authenticated / Problem with Nexus server')
+        except Exception as error:
+            print(error)
             raise SystemExit
         images = response['items']
         self.my_images = []
         for image in images:
             ImageUrl = image['assets'][0]['downloadUrl']
             try:
-                response = get(ImageUrl, auth=(self.USER_LOGIN, self.USER_PASSWORD))
+                response = get(ImageUrl, auth=(self.NEXUS_USER_LOGIN, self.NEXUS_USER_PASSWORD))
             except:
-                print('Problem with Nexus server | Image get request')
+                print('Problem with Nexus server')
                 raise SystemExit
             response = response.json()
             tmp_str = response['history'][0]['v1Compatibility']
@@ -70,9 +69,9 @@ class NexusCleaner:
         tmp_pos = ImageUrl.rfind('/')
         DelUrl = ImageUrl[:tmp_pos + 1] + digest
         try:
-            response = delete(DelUrl, auth=(self.USER_LOGIN, self.USER_PASSWORD), headers=headers)
+            response = delete(DelUrl, auth=(self.NEXUS_USER_LOGIN, self.NEXUS_USER_PASSWORD), headers=headers)
         except:
-            print('Problem with Nexus server | Image delete request')
+            print('Problem with Nexus server')
             raise SystemExit
         return response.status_code
 
@@ -177,10 +176,8 @@ def nexus_cleaner_flag_parse(flag_list):
 
 
 if __name__ == "__main__":
-
     flag_list = nexus_cleaner_flag_parse(argv[1:])
     nexus = NexusCleaner()
-    print(flag_list)
     deleted_list = nexus.clean_old_images(
         Keep=int(flag_list[0]),
         Days=int(flag_list[1]),

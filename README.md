@@ -4,7 +4,7 @@ Delete Nexus OSS Docker images by flags.
 
 Requires environment variables:
 
-NEXUS_ADRESS    
+NEXUS_ADDRESS    
 NEXUS_PORT      
 NEXUS_USER_LOGIN      
 NEXUS_USER_PASSWORD   
