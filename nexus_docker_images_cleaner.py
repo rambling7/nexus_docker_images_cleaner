@@ -30,20 +30,23 @@ class NexusCleaner:
             params['version'] = ImageVersion
         search_url = '{0}:{1}/service/rest/beta/search'.format(self.NEXUS_ADDRESS, self.NEXUS_PORT)
         try:
-            response = get(search_url, auth=(self.NEXUS_USER_LOGIN, self.NEXUS_USER_PASSWORD), params=params)
-            response = response.json()
+            response = get(search_url, auth=(self.NEXUS_USER_LOGIN, self.NEXUS_USER_PASSWORD), params=params)          
         except Exception as error:
+            print('Problem with connect to Nexus:')
             print(error)
             raise SystemExit
+        try:    
+            response = response.json()
+        except Exception as error:
+            print('Problem with json response from Nexus:')
+            print(error)
+            raise SystemExit
+            
         images = response['items']
         self.my_images = []
         for image in images:
             ImageUrl = image['assets'][0]['downloadUrl']
-            try:
-                response = get(ImageUrl, auth=(self.NEXUS_USER_LOGIN, self.NEXUS_USER_PASSWORD))
-            except:
-                print('Problem with Nexus server')
-                raise SystemExit
+            response = get(ImageUrl, auth=(self.NEXUS_USER_LOGIN, self.NEXUS_USER_PASSWORD))
             response = response.json()
             tmp_str = response['history'][0]['v1Compatibility']
             tmp_json = loads(tmp_str)
