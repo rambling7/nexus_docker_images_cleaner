@@ -134,105 +134,115 @@ class NexusCleaner:
                 image['ImageSha'])
         return self.del_images
 
+# test class
+class testNexusCleaner(NexusCleaner):
+    pass
 
-''' MAIN '''
+# main function
+def main():
+
+        # my parser check
+        def simple_parser_check(my_args_dict):
+            def parser_cjeck_error_raiser():
+                print('''Significant errors in ArgumentParser
+                 - contact the maintainer.''')
+                raise SystemExit
+            if (my_args_dict['i'] == ''  and
+                my_args_dict['all_images'] == False):
+                parser_cjeck_error_raiser()
+            elif (my_args_dict['r'] == '' and
+                my_args_dict['all-repositories'] == False):
+                parser_cjeck_error_raiser()
+
+
+        # create parser
+        nexus_cleaner_parser = ArgumentParser(
+            prog='python3 nexus_docker_images_cleaner.py', 
+            description='''Delete docker images in Nexus Repository Manager 3
+            Requires environment variables:
+                NEXUS_ADDRESS, 
+                NEXUS_PORT, 
+                NEXUS_USER_LOGIN, 
+                NEXUS_USER_PASSWORD.
+            ''')
+
+        # create repo group flags 
+        repos_group = nexus_cleaner_parser.add_mutually_exclusive_group(
+            required=True)
+        repos_group.add_argument(
+            '-r', 
+            metavar='str_repo_name', 
+            type=str, 
+            default='',
+            help='''Repository name. 
+            If you want to work with all repositories 
+            use '--all-repositories' option.''')
+        repos_group.add_argument(
+            '--all-repositories', 
+            action='store_true',
+            help="Use to clean all repositories instead '-r'.")
+
+        # create image group flags 
+        images_group = nexus_cleaner_parser.add_mutually_exclusive_group(
+            required=True)
+        images_group.add_argument(
+            '-i', 
+            metavar='str_image_name', 
+            type=str, 
+            default='',
+            help='''Image name. 
+            If you want to work with all images use '--all-images' option.''')
+        images_group.add_argument(
+            '--all-images', 
+            action='store_true',
+            help="Use to clean all images instead '-i'.")
+
+        # create keed and day group flags 
+        keep_day_group = nexus_cleaner_parser.add_mutually_exclusive_group()
+        keep_day_group.add_argument(
+            '-d', 
+            default=0,
+            metavar='int_days', 
+            type=int,
+            help='''Days count after which image is deleted (0 by default). 
+            (!) Can't be used with '-k' option.''')
+        keep_day_group.add_argument(
+            '-k', 
+            default=0, 
+            metavar='int_keep', 
+            type=int,
+            help='''Number of latest images to keep (0 by default). 
+            (!) Can't be used with '-d' option.''')
+
+        # create version flag 
+        nexus_cleaner_parser.add_argument(
+            '-t', 
+            metavar='str_image_version', 
+            default='', 
+            type=str, 
+            help="[str] Tag name (delete all by default).")
+
+        my_args_dict = vars(nexus_cleaner_parser.parse_args())
+
+
+        simple_parser_check(my_args_dict)
+        nexus = NexusCleaner()
+        deleted_list = nexus.clean_old_images(
+            Keep=my_args_dict['k'],
+            Days=my_args_dict['d'],
+            RepoName=my_args_dict['r'],
+            ImageName=my_args_dict['i'],
+            ImageVersion=my_args_dict['t'])
+        if deleted_list:
+            for image in deleted_list:
+                print(('REPOSITORY: {0} | DELETED: {1}:{2}'.format(
+                    image['RepoName'], 
+                    image['ImageName'], 
+                    image['ImageVersion'])))
+        else:
+            print('No images in delete query')
 
 if __name__ == "__main__":
+    main()
 
-    # my simple checker argparse correct work
-    def simple_parser_check(my_args_dict):
-        def parser_cjeck_error_raiser():
-            print('''Significant errors in ArgumentParser
-             - contact the maintainer.''')
-            raise SystemExit
-        if (my_args_dict['i'] == ''  and
-            my_args_dict['all_images'] == False):
-            parser_cjeck_error_raiser()
-        elif (my_args_dict['r'] == '' and
-            my_args_dict['all-repositories'] == False):
-            parser_cjeck_error_raiser()
-
-    # create parser
-    nexus_cleaner_parser = ArgumentParser(
-        prog='python3 nexus_docker_images_cleaner.py', 
-        description='''Delete docker images in Nexus Repository Manager 3
-        Requires environment variables:
-            NEXUS_ADDRESS, 
-            NEXUS_PORT, 
-            NEXUS_USER_LOGIN, 
-            NEXUS_USER_PASSWORD.
-        ''')
-
-    # create repo group flags 
-    repos_group = nexus_cleaner_parser.add_mutually_exclusive_group(
-        required=True)
-    repos_group.add_argument(
-        '-r', 
-        metavar='str_repo_name', 
-        type=str, 
-        default='',
-        help='''Repository name. 
-        If you want to work with all repositories 
-        use '--all-repositories' option.''')
-    repos_group.add_argument(
-        '--all-repositories', 
-        action='store_true',
-        help="Use to clean all repositories instead '-r'.")
-
-    # create image group flags 
-    images_group = nexus_cleaner_parser.add_mutually_exclusive_group(
-        required=True)
-    images_group.add_argument(
-        '-i', 
-        metavar='str_image_name', 
-        type=str, 
-        default='',
-        help='''Image name. 
-        If you want to work with all images use '--all-images' option.''')
-    images_group.add_argument(
-        '--all-images', 
-        action='store_true',
-        help="Use to clean all images instead '-i'.")
-
-    # create keed and day group flags 
-    keep_day_group = nexus_cleaner_parser.add_mutually_exclusive_group()
-    keep_day_group.add_argument(
-        '-d', 
-        default=0,
-        metavar='int_days', 
-        type=int,
-        help='''Days count after which image is deleted (0 by default). 
-        (!) Can't be used with '-k' option.''')
-    keep_day_group.add_argument(
-        '-k', 
-        default=0, 
-        metavar='int_keep', 
-        type=int,
-        help='''Number of latest images to keep (0 by default). 
-        (!) Can't be used with '-d' option.''')
-
-    # create version flag 
-    nexus_cleaner_parser.add_argument(
-        '-t', 
-        metavar='str_image_version', 
-        default='', 
-        type=str, 
-        help="[str] Tag name (delete all by default).")
-
-    my_args_dict = vars(nexus_cleaner_parser.parse_args())
-    simple_parser_check(my_args_dict)
-    nexus = NexusCleaner()
-    deleted_list = nexus.clean_old_images(
-        Keep=my_args_dict['k'],
-        Days=my_args_dict['d'],
-        RepoName=my_args_dict['r'],
-        ImageName=my_args_dict['i'],
-        ImageVersion=my_args_dict['t'])
-    if deleted_list:
-        for image in deleted_list:
-            print(('REPOSITORY: {0} | DELETED: {1}:{2}'.format(
-                image['RepoName'], 
-                image['ImageName'], 
-                image['ImageVersion'])))
-    else:
-        print('No images in delete query')
+   
